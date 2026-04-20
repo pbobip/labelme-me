@@ -8,7 +8,7 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $repoName = Split-Path $repoRoot -Leaf
 $parentDir = Split-Path $repoRoot -Parent
 $targetDir = if ([string]::IsNullOrWhiteSpace($OutputDir)) { $parentDir } else { $OutputDir }
-$zipName = "$repoName-v5.11.4-custom.1-win-source.zip"
+$zipName = "$repoName-v5.11.4.post1-win-source.zip"
 $zipPath = Join-Path $targetDir $zipName
 $stageDir = Join-Path $env:TEMP "$repoName-release-stage"
 

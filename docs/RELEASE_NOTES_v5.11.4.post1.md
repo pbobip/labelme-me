@@ -1,6 +1,6 @@
 # Release Notes
 
-## `v5.11.4-custom.1`
+## `v5.11.4.post1`
 
 首个对外发布版本，基于上游 `labelme v5.11.4`。
 

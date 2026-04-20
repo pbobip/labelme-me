@@ -112,7 +112,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_custom.ps1
 
 - [功能说明](docs/CUSTOM_FEATURES.md)
 - [Windows 安装教程](docs/WINDOWS_INSTALL.md)
-- [首版发布说明](docs/RELEASE_NOTES_v5.11.4-custom.1.md)
+- [首版发布说明](docs/RELEASE_NOTES_v5.11.4.post1.md)
 
 ## 仓库里的辅助内容
 
@@ -122,7 +122,7 @@ config/
 docs/
   CUSTOM_FEATURES.md
   WINDOWS_INSTALL.md
-  RELEASE_NOTES_v5.11.4-custom.1.md
+  RELEASE_NOTES_v5.11.4.post1.md
 scripts/
   install_windows_custom.ps1
   build_release_zip.ps1
