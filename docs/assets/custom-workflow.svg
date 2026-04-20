@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">labelme-me custom workflow</title>
+  <desc id="desc">Overview of the custom shortcuts and workflow added by labelme-me.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6f8fb"/>
+      <stop offset="100%" stop-color="#eef3fa"/>
+    </linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f6feb"/>
+      <stop offset="100%" stop-color="#2da44e"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .title { font: 700 34px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #ffffff; }
+      .subtitle { font: 500 17px "Segoe UI", "Microsoft YaHei", sans-serif; fill: rgba(255,255,255,0.92); }
+      .section { font: 700 24px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #0f172a; }
+      .body { font: 500 16px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #334155; }
+      .small { font: 500 14px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #64748b; }
+      .pill { font: 700 18px "Consolas", "Segoe UI", monospace; fill: #0f172a; }
+      .cardTitle { font: 700 20px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #111827; }
+      .cardBody { font: 500 15px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #475569; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="760" fill="url(#bg)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="48" y="36" width="1104" height="150" rx="28" fill="url(#hero)"/>
+  </g>
+  <text x="86" y="98" class="title">labelme-me Windows Workflow</text>
+  <text x="86" y="136" class="subtitle">围绕高频标注动作做的轻量定制：更快切状态、更快看边界、更快改控制点。</text>
+  <text x="86" y="165" class="subtitle">基线版本：labelme v5.11.4</text>
+
+  <text x="58" y="236" class="section">核心快捷键</text>
+
+  <g filter="url(#shadow)">
+    <rect x="58" y="260" width="252" height="122" rx="24" fill="#ffffff"/>
+    <rect x="334" y="260" width="252" height="122" rx="24" fill="#ffffff"/>
+    <rect x="610" y="260" width="252" height="122" rx="24" fill="#ffffff"/>
+    <rect x="886" y="260" width="252" height="122" rx="24" fill="#ffffff"/>
+  </g>
+
+  <g>
+    <rect x="82" y="286" width="72" height="42" rx="12" fill="#dcfce7"/>
+    <text x="102" y="314" class="pill">C</text>
+    <text x="82" y="352" class="cardTitle">切换 done</text>
+    <text x="82" y="374" class="cardBody">选中 shape 后直接切换完成状态</text>
+  </g>
+
+  <g>
+    <rect x="358" y="286" width="112" height="42" rx="12" fill="#dbeafe"/>
+    <text x="376" y="314" class="pill">Ctrl + Click</text>
+    <text x="358" y="352" class="cardTitle">边上加点</text>
+    <text x="358" y="374" class="cardBody">不用再走原来的低效加点交互</text>
+  </g>
+
+  <g>
+    <rect x="634" y="286" width="156" height="42" rx="12" fill="#fef3c7"/>
+    <text x="652" y="314" class="pill">Alt + 左键拖框</text>
+    <text x="634" y="352" class="cardTitle">框选控制点</text>
+    <text x="634" y="374" class="cardBody">可跨多个 shape 一次性框点</text>
+  </g>
+
+  <g>
+    <rect x="910" y="286" width="164" height="42" rx="12" fill="#fee2e2"/>
+    <text x="928" y="314" class="pill">X / Backspace</text>
+    <text x="910" y="352" class="cardTitle">删点 / 批量删点</text>
+    <text x="910" y="374" class="cardBody">单点删除和框选删除共用一套入口</text>
+  </g>
+
+  <text x="58" y="446" class="section">工作流变化</text>
+
+  <g filter="url(#shadow)">
+    <rect x="58" y="468" width="502" height="232" rx="28" fill="#ffffff"/>
+    <rect x="584" y="468" width="554" height="232" rx="28" fill="#ffffff"/>
+  </g>
+
+  <text x="86" y="512" class="cardTitle">原版高频痛点</text>
+  <text x="86" y="548" class="body">1. done 状态切换不够直接</text>
+  <text x="86" y="579" class="body">2. 看边界要反复打开亮度 / 对比度弹窗</text>
+  <text x="86" y="610" class="body">3. 控制点加删与批量处理不够顺手</text>
+  <text x="86" y="641" class="body">4. 顶部删除当前标注文件按钮容易误触</text>
+  <text x="86" y="676" class="small">labelme-me 的定制目标就是压缩这些重复成本。</text>
+
+  <text x="612" y="512" class="cardTitle">labelme-me 的改法</text>
+  <text x="612" y="548" class="body">1. done 切换前置到主界面，状态文本和颜色同步反馈</text>
+  <text x="612" y="579" class="body">2. 工具栏增加 Contrast 1/3，一键切换观察状态</text>
+  <text x="612" y="610" class="body">3. Ctrl + Click 加点，Alt + 左键拖框批量选点</text>
+  <text x="612" y="641" class="body">4. 顶部工具栏隐藏删除当前标注文件按钮</text>
+  <text x="612" y="676" class="small">结果不是“大改架构”，而是把常用操作直接改顺手。</text>
+</svg>
