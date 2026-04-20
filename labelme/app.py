@@ -1457,14 +1457,13 @@ class MainWindow(QtWidgets.QMainWindow):
             text = f"{shape.label} ({shape.group_id})"
 
         active_flags = [
-            str(flag).upper()
-            for flag, value in (shape.flags or {}).items()
-            if value
+            str(flag).upper() for flag, value in (shape.flags or {}).items() if value
         ]
+        text = str(text)
         suffix = f" [{' | '.join(active_flags)}]" if active_flags else ""
         r, g, b = shape.fill_color.getRgb()[:3]
         return (
-            f'{html.escape(text)}{html.escape(suffix)} '
+            f"{html.escape(text)}{html.escape(suffix)} "
             f'<font color="#{r:02x}{g:02x}{b:02x}">●</font>'
         )
 
@@ -1795,7 +1794,8 @@ class MainWindow(QtWidgets.QMainWindow):
             QtGui.QImage.Format_RGB888,
         )
         self.onNewBrightnessContrast(qimage)
-        self._brightness_contrast_values[self.filename] = (brightness, contrast)
+        if self.filename is not None:
+            self._brightness_contrast_values[self.filename] = (brightness, contrast)
 
     def toggleContrast13Quick(self, value: bool = False):
         if self.filename is None:
@@ -1818,7 +1818,7 @@ class MainWindow(QtWidgets.QMainWindow):
         contrast = (
             BrightnessContrastDialog._base_value
             if contrast > midpoint
-            else BrightnessContrastDialog._max_value
+            else 3 * BrightnessContrastDialog._base_value
         )
         self._apply_brightness_contrast_values(brightness, contrast)
 

@@ -277,10 +277,7 @@ class Canvas(QtWidgets.QWidget):
         return any(indices for indices in self.boxSelectedVerticesMap.values())
 
     def _is_box_selecting_vertices(self) -> bool:
-        return (
-            self.boxSelectionStart is not None
-            and self.boxSelectionEnd is not None
-        )
+        return self.boxSelectionStart is not None and self.boxSelectionEnd is not None
 
     def _emit_vertex_selected_state(self) -> None:
         self.vertexSelected.emit(
