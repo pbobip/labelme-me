@@ -25,18 +25,6 @@
 
 ## Preview
 
-### 标注界面
-
-![Annotation Overview](docs/assets/annotation-overview.jpg)
-
-上图是 `Labelme` 基础标注界面示例，用来说明这类工具的主界面形态。
-
-### 视频标注示例
-
-![Video Annotation Demo](docs/assets/video-annotation-demo.gif)
-
-上图是仓库自带的示例 GIF，用来展示整体标注流。
-
 ### 定制工作流总览
 
 ![Custom Workflow](docs/assets/custom-workflow.svg)
