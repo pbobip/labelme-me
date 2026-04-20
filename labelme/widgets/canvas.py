@@ -55,6 +55,9 @@ class Canvas(QtWidgets.QWidget):
     prevhVertex: int | None
     hEdge: int | None
     prevhEdge: int | None
+    boxSelectedVerticesMap: dict[Shape, set[int]]
+    boxSelectionStart: QPointF | None
+    boxSelectionEnd: QPointF | None
 
     zoomRequest = QtCore.pyqtSignal(int, QPointF)
     scrollRequest = QtCore.pyqtSignal(int, int)
@@ -270,6 +273,172 @@ class Canvas(QtWidgets.QWidget):
     def selectedEdge(self):
         return self.hEdge is not None
 
+    def _has_box_selected_vertices(self) -> bool:
+        return any(indices for indices in self.boxSelectedVerticesMap.values())
+
+    def _is_box_selecting_vertices(self) -> bool:
+        return (
+            self.boxSelectionStart is not None
+            and self.boxSelectionEnd is not None
+        )
+
+    def _emit_vertex_selected_state(self) -> None:
+        self.vertexSelected.emit(
+            self.selectedVertex() or self._has_box_selected_vertices()
+        )
+
+    def _clear_box_selected_vertices(self) -> None:
+        self.boxSelectedVerticesMap = {}
+        self.boxSelectionStart = None
+        self.boxSelectionEnd = None
+
+    def _start_vertex_box_selection(self, pos: QPointF) -> bool:
+        self.unHighlight()
+        self.boxSelectedVerticesMap = {}
+        self.boxSelectionStart = pos
+        self.boxSelectionEnd = pos
+        self._emit_vertex_selected_state()
+        return True
+
+    def _current_box_selection_rect(self) -> QtCore.QRectF | None:
+        if self.boxSelectionStart is None or self.boxSelectionEnd is None:
+            return None
+        return QtCore.QRectF(self.boxSelectionStart, self.boxSelectionEnd).normalized()
+
+    def _get_box_selected_vertex_indices(
+        self, shape: Shape, selection_rect: QtCore.QRectF | None
+    ) -> set[int]:
+        if selection_rect is None:
+            return set()
+        return {
+            index
+            for index, point in enumerate(shape.points)
+            if selection_rect.contains(point)
+        }
+
+    def _get_box_selected_vertices_by_shape(
+        self, selection_rect: QtCore.QRectF | None
+    ) -> dict[Shape, set[int]]:
+        if selection_rect is None:
+            return {}
+
+        selected_by_shape: dict[Shape, set[int]] = {}
+        for shape in self.shapes:
+            if not self.isVisible(shape) or not shape.canRemovePoint():
+                continue
+            indices = self._get_box_selected_vertex_indices(shape, selection_rect)
+            if indices:
+                selected_by_shape[shape] = indices
+        return selected_by_shape
+
+    def _update_vertex_box_selection(self, pos: QPointF) -> None:
+        if not self._is_box_selecting_vertices():
+            return
+        self.boxSelectionEnd = pos
+        self.boxSelectedVerticesMap = self._get_box_selected_vertices_by_shape(
+            self._current_box_selection_rect()
+        )
+        self._emit_vertex_selected_state()
+
+    def _finish_vertex_box_selection(self) -> None:
+        if not self._is_box_selecting_vertices():
+            return
+        self.boxSelectedVerticesMap = self._get_box_selected_vertices_by_shape(
+            self._current_box_selection_rect()
+        )
+        self.boxSelectionStart = None
+        self.boxSelectionEnd = None
+        self._emit_vertex_selected_state()
+
+    def _minimum_point_count(self, shape: Shape) -> int:
+        if shape.shape_type == "polygon":
+            return 3
+        if shape.shape_type == "linestrip":
+            return 2
+        return len(shape.points)
+
+    def _remove_box_selected_points(self) -> bool:
+        if not self._has_box_selected_vertices():
+            return False
+
+        changed_shapes: list[Shape] = []
+        skipped_shapes = 0
+        last_shape: Shape | None = None
+
+        for shape, indices in list(self.boxSelectedVerticesMap.items()):
+            selected_vertices = sorted(indices)
+            max_removable = len(shape.points) - self._minimum_point_count(shape)
+            if max_removable <= 0 or len(selected_vertices) > max_removable:
+                skipped_shapes += 1
+                continue
+
+            for index in sorted(selected_vertices, reverse=True):
+                shape.removePoint(index)
+
+            shape.highlightClear()
+            changed_shapes.append(shape)
+            last_shape = shape
+
+        if not changed_shapes:
+            self._update_status(
+                extra_messages=[self.tr("Selected points could not be removed")]
+            )
+            return False
+
+        self.hShape = last_shape
+        self.prevhShape = last_shape
+        self.hVertex = None
+        self.prevhVertex = None
+        self.hEdge = None
+        self.prevhEdge = None
+        self._clear_box_selected_vertices()
+        self._emit_vertex_selected_state()
+        self.movingShape = True
+        if skipped_shapes:
+            self._update_status(
+                extra_messages=[
+                    self.tr("Some shapes were skipped to preserve minimum point count")
+                ]
+            )
+        return True
+
+    def _scale_canvas_point(self, point: QPointF) -> QPointF:
+        return QPointF(point.x() * self.scale, point.y() * self.scale)
+
+    def _paint_box_selection_overlay(self, painter: QtGui.QPainter) -> None:
+        if self._has_box_selected_vertices():
+            pen = QtGui.QPen(QtGui.QColor(255, 255, 255, 255))
+            pen.setWidth(2)
+            painter.setPen(pen)
+            painter.setBrush(QtGui.QColor(255, 255, 255, 255))
+            marker_size = Shape.point_size * 1.6
+            for shape, indices in self.boxSelectedVerticesMap.items():
+                for index in sorted(indices):
+                    if index >= len(shape.points):
+                        continue
+                    center = self._scale_canvas_point(shape.points[index])
+                    rect = QtCore.QRectF(
+                        center.x() - marker_size / 2,
+                        center.y() - marker_size / 2,
+                        marker_size,
+                        marker_size,
+                    )
+                    painter.drawEllipse(rect)
+
+        rect = self._current_box_selection_rect()
+        if rect is not None:
+            scaled_rect = QtCore.QRectF(
+                self._scale_canvas_point(rect.topLeft()),
+                self._scale_canvas_point(rect.bottomRight()),
+            ).normalized()
+            pen = QtGui.QPen(QtGui.QColor(0, 200, 255, 220))
+            pen.setWidth(2)
+            pen.setStyle(Qt.DashLine)
+            painter.setPen(pen)
+            painter.setBrush(QtGui.QColor(0, 200, 255, 40))
+            painter.drawRect(scaled_rect)
+            painter.fillRect(scaled_rect, QtGui.QColor(0, 200, 255, 40))
+
     def _update_status(self, extra_messages: list[str] | None = None) -> None:
         messages: list[str] = []
         if self.drawing():
@@ -416,6 +585,15 @@ class Canvas(QtWidgets.QWidget):
             self._update_status()
             return
 
+        if Qt.LeftButton & a0.buttons() and self._is_box_selecting_vertices():
+            self.overrideCursor(CURSOR_POINT)
+            self._update_vertex_box_selection(pos)
+            self.repaint()
+            self._update_status(
+                extra_messages=[self.tr("Release mouse to finish point selection")]
+            )
+            return
+
         # Polygon/Vertex moving.
         if Qt.LeftButton & a0.buttons():
             if self.selectedVertex():
@@ -455,6 +633,10 @@ class Canvas(QtWidgets.QWidget):
                     status_messages.append(
                         self.tr("ALT + SHIFT + Click to delete point")
                     )
+                    if shape in self.selectedShapes and len(self.selectedShapes) == 1:
+                        status_messages.append(
+                            self.tr("ALT + Left drag to box-select points")
+                        )
                 self.update()
                 break
             elif index_edge is not None and shape.canAddPoint():
@@ -465,7 +647,7 @@ class Canvas(QtWidgets.QWidget):
                 self.prevhShape = self.hShape = shape
                 self.prevhEdge = self.hEdge = index_edge
                 self.overrideCursor(CURSOR_POINT)
-                status_messages.append(self.tr("ALT + Click to create point on shape"))
+                status_messages.append(self.tr("CTRL + Click to create point on shape"))
                 self.update()
                 break
             elif shape.containsPoint(pos):
@@ -482,13 +664,17 @@ class Canvas(QtWidgets.QWidget):
                         self.tr("Right-click & drag to copy shape"),
                     ]
                 )
+                if shape in self.selectedShapes and shape.canRemovePoint():
+                    status_messages.append(
+                        self.tr("ALT + Left drag to box-select points")
+                    )
                 self.overrideCursor(CURSOR_GRAB)
                 self.update()
                 break
         else:  # Nothing found, clear highlights, reset state.
             self.restoreCursor()
             self.unHighlight()
-        self.vertexSelected.emit(self.hVertex is not None)
+        self._emit_vertex_selected_state()
         self._update_status(extra_messages=status_messages)
 
     def addPointToEdge(self):
@@ -505,6 +691,9 @@ class Canvas(QtWidgets.QWidget):
         self.movingShape = True
 
     def removeSelectedPoint(self):
+        if self._remove_box_selected_points():
+            return
+
         shape = self.prevhShape
         index = self.prevhVertex
         if shape is None or index is None:
@@ -512,7 +701,12 @@ class Canvas(QtWidgets.QWidget):
         shape.removePoint(index)
         shape.highlightClear()
         self.hShape = shape
+        self.prevhShape = shape
+        self.hVertex = None
         self.prevhVertex = None
+        self.hEdge = None
+        self.prevhEdge = None
+        self._emit_vertex_selected_state()
         self.movingShape = True  # Save changes
 
     def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
@@ -583,7 +777,21 @@ class Canvas(QtWidgets.QWidget):
                         self.drawingPolygon.emit(True)
                         self.update()
             elif self.editing():
-                if self.selectedEdge() and a0.modifiers() == Qt.AltModifier:
+                if a0.modifiers() == Qt.AltModifier and self._start_vertex_box_selection(
+                    pos
+                ):
+                    self.prevPoint = pos
+                    self.repaint()
+                    self._update_status(
+                        extra_messages=[self.tr("Drag to box-select points")]
+                    )
+                    return
+
+                if self._has_box_selected_vertices():
+                    self._clear_box_selected_vertices()
+                    self._emit_vertex_selected_state()
+
+                if self.selectedEdge() and a0.modifiers() == Qt.ControlModifier:
                     self.addPointToEdge()
                 elif self.selectedVertex() and a0.modifiers() == (
                     Qt.AltModifier | Qt.ShiftModifier
@@ -617,6 +825,11 @@ class Canvas(QtWidgets.QWidget):
                 self.selectedShapesCopy = []
                 self.repaint()
         elif a0.button() == Qt.LeftButton:
+            if self._is_box_selecting_vertices():
+                self._finish_vertex_box_selection()
+                self.repaint()
+                self._update_status()
+                return
             if self.editing():
                 if (
                     self.hShape is not None
@@ -691,6 +904,9 @@ class Canvas(QtWidgets.QWidget):
 
     def selectShapePoint(self, point, multiple_selection_mode):
         """Select the first shape created which contains this point."""
+        if self._has_box_selected_vertices():
+            self._clear_box_selected_vertices()
+            self._emit_vertex_selected_state()
         if self.hVertex is not None:
             assert self.hShape is not None
             self.hShape.highlightVertex(i=self.hVertex, action=self.hShape.MOVE_VERTEX)
@@ -738,6 +954,19 @@ class Canvas(QtWidgets.QWidget):
             logger.warning("hVertex is None, so cannot move vertex: pos=%r", pos)
             return
         assert self.hShape is not None
+        if self.hVertex >= len(self.hShape.points):
+            logger.warning(
+                "hVertex=%r is out of range for len(points)=%r, so cancel move",
+                self.hVertex,
+                len(self.hShape.points),
+            )
+            self.hShape.highlightClear()
+            self.hVertex = None
+            self.prevhVertex = None
+            self.hEdge = None
+            self.prevhEdge = None
+            self._emit_vertex_selected_state()
+            return
 
         point: QPointF = self.hShape[self.hVertex]
 
@@ -778,6 +1007,8 @@ class Canvas(QtWidgets.QWidget):
 
     def deSelectShape(self):
         if self.selectedShapes:
+            self._clear_box_selected_vertices()
+            self._emit_vertex_selected_state()
             self.setHiding(False)
             self.selectionChanged.emit([])
             self.hShapeIsSelected = False
@@ -852,6 +1083,7 @@ class Canvas(QtWidgets.QWidget):
         if self.selectedShapesCopy:
             for s in self.selectedShapesCopy:
                 s.paint(p)
+        self._paint_box_selection_overlay(p)
 
         if not self.current or self.createMode not in [
             "polygon",
@@ -1145,6 +1377,9 @@ class Canvas(QtWidgets.QWidget):
         self.prevhVertex = None
         self.hEdge = None
         self.prevhEdge = None
+        self.boxSelectedVerticesMap = {}
+        self.boxSelectionStart = None
+        self.boxSelectionEnd = None
         self.update()
 
 

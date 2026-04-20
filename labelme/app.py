@@ -18,6 +18,7 @@ import imgviz
 import natsort
 import numpy as np
 import osam
+import PIL.ImageEnhance
 from loguru import logger
 from numpy.typing import NDArray
 from PyQt5 import QtCore
@@ -611,6 +612,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Adjust brightness and contrast"),
             enabled=False,
         )
+        quickContrastToggle = action(
+            self.tr("Contrast\n1/3"),
+            self.toggleContrast13Quick,
+            None,
+            "brightness-contrast.svg",
+            self.tr("Toggle contrast between 1x and 3x"),
+            enabled=False,
+        )
         self._zoom_mode = _ZoomMode.FIT_WINDOW
         fitWindow.setChecked(Qt.Checked)
         self.scalers = {
@@ -628,6 +637,14 @@ class MainWindow(QtWidgets.QMainWindow):
             tip=self.tr("Modify the label of the selected polygon"),
             enabled=False,
         )
+        markDone = action(
+            self.tr("Mark Done"),
+            self.markSelectedShapesDone,
+            "C",
+            icon="paint-bucket.svg",
+            tip=self.tr("Toggle done for selected polygons"),
+            enabled=False,
+        )
 
         fill_drawing = action(
             self.tr("Fill Drawing Polygon"),
@@ -643,7 +660,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Label list context menu.
         labelMenu = QtWidgets.QMenu()
-        utils.addActions(labelMenu, (edit, delete))
+        utils.addActions(labelMenu, (edit, markDone, delete))
         self.labelList.setContextMenuPolicy(Qt.CustomContextMenu)
         self.labelList.customContextMenuRequested.connect(self.popLabelListMenu)
 
@@ -692,6 +709,7 @@ class MainWindow(QtWidgets.QMainWindow):
             ),
             delete=delete,
             edit=edit,
+            markDone=markDone,
             duplicate=duplicate,
             copy=copy,
             paste=paste,
@@ -715,6 +733,7 @@ class MainWindow(QtWidgets.QMainWindow):
             fitWindow=fitWindow,
             fitWidth=fitWidth,
             brightnessContrast=brightnessContrast,
+            quickContrastToggle=quickContrastToggle,
             openNextImg=openNextImg,
             openPrevImg=openPrevImg,
             reset_layout=action(
@@ -755,6 +774,7 @@ class MainWindow(QtWidgets.QMainWindow):
             createLineStripMode,
             createAiPolygonMode,
             createAiMaskMode,
+            quickContrastToggle,
             brightnessContrast,
         )
         # menu shown at right click
@@ -773,6 +793,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # XXX: need to add some actions here to activate the shortcut
         self.edit_menu_actions = (
             edit,
+            markDone,
             duplicate,
             copy,
             paste,
@@ -843,6 +864,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 fitWindow,
                 fitWidth,
                 None,
+                quickContrastToggle,
                 brightnessContrast,
                 self.actions.toggle_keep_prev_brightness_contrast,
             ),
@@ -888,12 +910,12 @@ class MainWindow(QtWidgets.QMainWindow):
                     openPrevImg,
                     openNextImg,
                     save,
-                    deleteFile,
                     None,
                     editMode,
                     duplicate,
                     delete,
                     undo,
+                    quickContrastToggle,
                     brightnessContrast,
                     None,
                     fitWindow,
@@ -1344,14 +1366,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 shape.description = description
 
             self._update_shape_color(shape)
-            if shape.group_id is None:
-                r, g, b = shape.fill_color.getRgb()[:3]
-                item.setText(
-                    f"{html.escape(shape.label)} "
-                    f'<font color="#{r:02x}{g:02x}{b:02x}">●</font>'
-                )
-            else:
-                item.setText(f"{shape.label} ({shape.group_id})")
+            item.setText(self._format_shape_item_text(shape))
             self.setDirty()
             if self.uniqLabelList.find_label_item(shape.label) is None:
                 self.uniqLabelList.add_label_item(
@@ -1396,13 +1411,31 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.duplicate.setEnabled(n_selected)
         self.actions.copy.setEnabled(n_selected)
         self.actions.edit.setEnabled(n_selected)
+        self.actions.markDone.setEnabled(n_selected)
+
+    def markSelectedShapesDone(self, value: bool = False):
+        selected_shapes = list(self.canvas.selectedShapes)
+        if not selected_shapes:
+            selected_shapes = [item.shape() for item in self.labelList.selectedItems()]
+        if not selected_shapes:
+            return
+
+        changed = False
+        for shape in selected_shapes:
+            if shape.flags is None:
+                shape.flags = {}
+            shape.flags["done"] = not bool(shape.flags.get("done", False))
+            self._update_shape_color(shape)
+            item = self.labelList.findItemByShape(shape)
+            item.setText(self._format_shape_item_text(shape))
+            changed = True
+
+        if changed:
+            self.canvas.update()
+            self.setDirty()
 
     def addLabel(self, shape):
-        if shape.group_id is None:
-            text = shape.label
-        else:
-            text = f"{shape.label} ({shape.group_id})"
-        label_list_item = LabelListWidgetItem(text, shape)
+        label_list_item = LabelListWidgetItem(self._format_shape_item_text(shape), shape)
         self.labelList.addItem(label_list_item)
         if self.uniqLabelList.find_label_item(shape.label) is None:
             self.uniqLabelList.add_label_item(
@@ -1413,13 +1446,31 @@ class MainWindow(QtWidgets.QMainWindow):
             action.setEnabled(True)
 
         self._update_shape_color(shape)
+        label_list_item.setText(self._format_shape_item_text(shape))
+
+    def _format_shape_item_text(self, shape: Shape) -> str:
+        if shape.group_id is None:
+            text = shape.label
+        else:
+            text = f"{shape.label} ({shape.group_id})"
+
+        active_flags = [
+            str(flag).upper()
+            for flag, value in (shape.flags or {}).items()
+            if value
+        ]
+        suffix = f" [{' | '.join(active_flags)}]" if active_flags else ""
         r, g, b = shape.fill_color.getRgb()[:3]
-        label_list_item.setText(
-            f'{html.escape(text)} <font color="#{r:02x}{g:02x}{b:02x}">●</font>'
+        return (
+            f'{html.escape(text)}{html.escape(suffix)} '
+            f'<font color="#{r:02x}{g:02x}{b:02x}">●</font>'
         )
 
     def _update_shape_color(self, shape):
-        r, g, b = self._get_rgb_by_label(shape.label)
+        if (shape.flags or {}).get("done"):
+            r, g, b = (46, 160, 67)
+        else:
+            r, g, b = self._get_rgb_by_label(shape.label)
         shape.line_color = QtGui.QColor(r, g, b)
         shape.vertex_fill_color = QtGui.QColor(r, g, b)
         shape.hvertex_fill_color = QtGui.QColor(255, 255, 255)
@@ -1723,6 +1774,48 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def onNewBrightnessContrast(self, qimage):
         self.canvas.loadPixmap(QtGui.QPixmap.fromImage(qimage), clear_shapes=False)
+
+    def _apply_brightness_contrast_values(self, brightness: int, contrast: int):
+        img = utils.img_data_to_pil(self.imageData).convert("RGB")
+        brightness_value = brightness / BrightnessContrastDialog._base_value
+        contrast_value = contrast / BrightnessContrastDialog._base_value
+
+        if brightness_value != 1:
+            img = PIL.ImageEnhance.Brightness(img).enhance(brightness_value)
+        if contrast_value != 1:
+            img = PIL.ImageEnhance.Contrast(img).enhance(contrast_value)
+
+        qimage = QtGui.QImage(
+            img.tobytes(),
+            img.width,
+            img.height,
+            img.width * 3,
+            QtGui.QImage.Format_RGB888,
+        )
+        self.onNewBrightnessContrast(qimage)
+        self._brightness_contrast_values[self.filename] = (brightness, contrast)
+
+    def toggleContrast13Quick(self, value: bool = False):
+        if self.filename is None:
+            logger.warning("filename is None, cannot toggle contrast")
+            return
+
+        brightness, contrast = self._brightness_contrast_values.get(
+            self.filename,
+            (BrightnessContrastDialog._base_value, BrightnessContrastDialog._base_value),
+        )
+        if brightness is None:
+            brightness = BrightnessContrastDialog._base_value
+        if contrast is None:
+            contrast = BrightnessContrastDialog._base_value
+
+        midpoint = 2 * BrightnessContrastDialog._base_value
+        contrast = (
+            BrightnessContrastDialog._base_value
+            if contrast > midpoint
+            else BrightnessContrastDialog._max_value
+        )
+        self._apply_brightness_contrast_values(brightness, contrast)
 
     def brightnessContrast(self, value: bool, is_initial_load: bool = False):
         if self.filename is None:
