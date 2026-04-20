@@ -147,7 +147,7 @@
     <message>
         <location filename="../widgets/canvas.py" line="0"/>
         <source>ALT + Click to create point on shape</source>
-        <translation>ALT + 點擊在形狀上創建點</translation>
+        <translation type="obsolete">ALT + 點擊在形狀上創建點</translation>
     </message>
     <message>
         <location filename="../widgets/canvas.py" line="0"/>
@@ -158,6 +158,36 @@
         <location filename="../widgets/canvas.py" line="0"/>
         <source>Click opposite corner for rectangle (Shift for square)</source>
         <translation>點擊矩形對角（Shift繪製正方形）</translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>Selected points could not be removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>Some shapes were skipped to preserve minimum point count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>Release mouse to finish point selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>ALT + Left drag to box-select points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>CTRL + Click to create point on shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>Drag to box-select points</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -833,6 +863,27 @@ To use the preferences editor, start Labelme with a config file:
         <location filename="../app.py" line="0"/>
         <source>Reset Layout</source>
         <translation>重置佈局</translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="0"/>
+        <source>Contrast
+1/3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="0"/>
+        <source>Toggle contrast between 1x and 3x</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="0"/>
+        <source>Mark Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="0"/>
+        <source>Toggle done for selected polygons</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

@@ -147,7 +147,7 @@
     <message>
         <location filename="../widgets/canvas.py" line="0"/>
         <source>ALT + Click to create point on shape</source>
-        <translation>ALT + Clique para criar um ponto na forma</translation>
+        <translation type="obsolete">ALT + Clique para criar um ponto na forma</translation>
     </message>
     <message>
         <location filename="../widgets/canvas.py" line="0"/>
@@ -158,6 +158,36 @@
         <location filename="../widgets/canvas.py" line="0"/>
         <source>Click opposite corner for rectangle (Shift for square)</source>
         <translation>Clique na esquina oposta do retângulo (Shift para quadrado)</translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>Selected points could not be removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>Some shapes were skipped to preserve minimum point count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>Release mouse to finish point selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>ALT + Left drag to box-select points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>CTRL + Click to create point on shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widgets/canvas.py" line="0"/>
+        <source>Drag to box-select points</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -833,6 +863,27 @@ Para usar o editor de preferências, inicie o Labelme com um arquivo de configur
         <location filename="../app.py" line="0"/>
         <source>Reset Layout</source>
         <translation>Redefinir layout</translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="0"/>
+        <source>Contrast
+1/3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="0"/>
+        <source>Toggle contrast between 1x and 3x</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="0"/>
+        <source>Mark Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="0"/>
+        <source>Toggle done for selected polygons</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>
