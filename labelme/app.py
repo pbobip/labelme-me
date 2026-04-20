@@ -1435,7 +1435,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.setDirty()
 
     def addLabel(self, shape):
-        label_list_item = LabelListWidgetItem(self._format_shape_item_text(shape), shape)
+        label_list_item = LabelListWidgetItem(
+            self._format_shape_item_text(shape), shape
+        )
         self.labelList.addItem(label_list_item)
         if self.uniqLabelList.find_label_item(shape.label) is None:
             self.uniqLabelList.add_label_item(
@@ -1802,7 +1804,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         brightness, contrast = self._brightness_contrast_values.get(
             self.filename,
-            (BrightnessContrastDialog._base_value, BrightnessContrastDialog._base_value),
+            (
+                BrightnessContrastDialog._base_value,
+                BrightnessContrastDialog._base_value,
+            ),
         )
         if brightness is None:
             brightness = BrightnessContrastDialog._base_value

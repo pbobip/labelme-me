@@ -777,8 +777,9 @@ class Canvas(QtWidgets.QWidget):
                         self.drawingPolygon.emit(True)
                         self.update()
             elif self.editing():
-                if a0.modifiers() == Qt.AltModifier and self._start_vertex_box_selection(
-                    pos
+                if (
+                    a0.modifiers() == Qt.AltModifier
+                    and self._start_vertex_box_selection(pos)
                 ):
                     self.prevPoint = pos
                     self.repaint()
